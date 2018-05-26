@@ -12,9 +12,11 @@ endif
 
 .seen:
 	git clone https://github.com/mrpossoms/Seen .seen
+
+.seen/lib/libseen.a: .seen
 	make -C .seen static
 
-all: .seen
+all: .seen/lib/libseen.a
 	g++ $(INC) $(CFLAGS) main.cpp -o stereo -lpng $(GLFW_LINK) $(LINK)
 
 clean:
