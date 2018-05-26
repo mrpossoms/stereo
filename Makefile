@@ -1,4 +1,6 @@
 CFLAGS = --std=c++11 -g -ftree-vectorize -O3
+INC=-I.seen/src
+LINK=.seen/lib/libseen.a
 
 ifeq ($(shell uname),Darwin)
 	GLFW_LINK +=-lpthread -lm -lglfw3 -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
@@ -8,5 +10,12 @@ else
 	CFLAGS += -D_XOPEN_SOURCE=500
 endif
 
-all:
-	g++ $(CFLAGS) main.cpp -o stereo -lseen -lpng $(GLFW_LINK)
+.seen:
+	git clone https://github.com/mrpossoms/Seen .seen
+	make -C .seen static
+
+all: .seen
+	g++ $(INC) $(CFLAGS) main.cpp -o stereo -lpng $(GLFW_LINK) $(LINK)
+
+clean:
+	rm stereo	

@@ -84,12 +84,20 @@ int main (int argc, char const * argv[])
 	float depth_map[dm_w * dm_h];
 	rgba_t depth_map_colors[dm_w * dm_h];
 
+	memset(depth_map, 0, sizeof(depth_map));
+
 	while(time(NULL) == start) usleep(1);
 	start = time(NULL);
+
+	float worst_best = 0;
+	float best_best = 1E7;
+	float average_best = 0;
 
 	int cycles = 0;
 	while(time(NULL) == start)
 	{
+		float total_samples = dm_w * dm_h;
+
 		for (int row = dm_h; row--;)
 		for (int j = dm_w; j--;)
 		{
@@ -119,19 +127,24 @@ int main (int argc, char const * argv[])
 				}
 			}
 
+			if (best_diff < best_best) best_best = best_diff;
+			if (best_diff > worst_best) worst_best = best_diff;
+			average_best += best_diff / total_samples;
+
+
+
 			float patch_dist = fabs(bi - j) / (float)width;
-			// float disp = patch_dist * 10;
-			// disp += 1;
-			// depth_map[row * dm_w + j] = disp / (disp * disp);
-			depth_map[row * dm_w + j] = log((patch_dist / IPD)) + 1;
+
+			depth_map[row * dm_w + j] = log(1.f / (patch_dist)) * 0.25;
 			depth_map_colors[row * dm_w + j] = eye_buffer[0][(patches[0].y * width) + patches[0].x];
-			// std::cerr <<  "(" << j << " | " << bi << ") " << best_diff << std::endl;
 		}
 		cycles++;
 	}
 
 	std::cerr << cycles << " fps" << std::endl;
-
+	std::cerr << "best: " << best_best << std::endl;
+	std::cerr << "worst: " << worst_best << std::endl;
+	std::cerr << "avg: " << average_best << std::endl;
 
 	CustomPass pointcloud_pass([&](){
 		glMatrixMode(GL_PROJECTION);
@@ -164,7 +177,7 @@ int main (int argc, char const * argv[])
 
 				float inv_z = 1;// - z;
 				glColor3ub(c.r * inv_z, c.g * inv_z, c.b * inv_z);
-				glVertex3f(-(x - 0.5), -(y - 0.5), z - 0.5);
+				glVertex3f(-(x - 0.5), -(y - 0.5), z - 1.0);
 			}
 		}
 		glEnd();
